@@ -1,0 +1,46 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+
+/* =========================================
+   AI SPORTS ANALYSIS ARENA — Global styles
+   ========================================= */
+
+:root {
+  --orange: #FF6200;
+  --orange-glow: rgba(255, 98, 0, 0.15);
+  --surface-1: #141414;
+  --surface-2: #1C1C1C;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+}
+
+html, body {
+  background: #0A0A0A;
+  color: white;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom thin scrollbar for content areas */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 98, 0, 0.4);
+}
