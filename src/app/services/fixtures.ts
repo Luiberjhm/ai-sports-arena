@@ -1,3 +1,5 @@
+// Endpoint Principal de la API Deportiva (Vercel Serverless Function)
+// Este archivo DEBE vivir en la carpeta /api en la raíz del proyecto
 export default async function handler(req: any, res: any) {
   // Configuración de cabeceras CORS para permitir peticiones desde tu web
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -33,6 +35,7 @@ export default async function handler(req: any, res: any) {
   const baseUrl = BASE_URLS[sport as string] || BASE_URLS['football'];
   
   // Construir la URL específica (Endpoint de Fixtures/Games)
+  // Nota: Cada deporte tiene parámetros ligeramente distintos, aquí estandarizamos para fútbol/games
   const endpoint = sport === 'football' ? '/fixtures' : '/games';
   
   try {
@@ -45,6 +48,7 @@ export default async function handler(req: any, res: any) {
     });
 
     const data = await response.json();
+    console.log(`✅ [API-Sports] Conexión exitosa. Datos enviados al cliente.`);
     res.status(200).json(data);
   } catch (error) {
     console.error(error);
