@@ -7,14 +7,16 @@
  * 
  * To connect to real sports APIs:
  * 
- * Option 1 — API-Football (football data):
- *   Base: https://api-sports.io/
- *   Docs: https://www.api-football.com/documentation-v3
+ * Option 1 — API-Sports (Recommended - High Quality Data):
+ *   Price: FREE (100 requests/day per sport).
+ *   How to get FREE: Go to dashboard.api-football.com -> Subscriptions -> Subscribe to "Free Plan" (0€).
+ *   Do this for: API-Football, API-Basketball, API-Baseball, etc.
  *   Set: VITE_FOOTBALL_API_KEY in .env
  * 
- * Option 2 — The Odds API (betting odds):
- *   Base: https://api.the-odds-api.com/
- *   Docs: https://the-odds-api.com/lossless-oddsapi/
+ * Option 2 — TheSportsDB (Alternative - Open Source):
+ *   Price: 100% Free (Public Key: '2' or '3').
+ *   Pros: No limits. Cons: Less detailed stats/odds for AI analysis.
+ *   Docs: https://www.thesportsdb.com/api.php
  *   Set: VITE_ODDS_API_KEY in .env
  * 
  * Option 3 — via your NestJS backend:
@@ -40,9 +42,6 @@ import {
   FOOTBALL_LEAGUES,
 } from '../data/mockData';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || null;
-const FOOTBALL_API_KEY = import.meta.env.VITE_FOOTBALL_API_KEY || null;
-
 // ============================================================
 // LEAGUE ID MAPPINGS — For real API connections
 // ============================================================
@@ -60,26 +59,31 @@ const LEAGUE_API_IDS: Record<string, number> = {
 // GET FOOTBALL MATCHES — By league
 // ============================================================
 export async function getFootballMatchday(leagueId: string): Promise<Match[]> {
-  // 🔌 REAL API: Uncomment when API key is available
-  // if (FOOTBALL_API_KEY) {
-  //   const apiId = LEAGUE_API_IDS[leagueId];
-  //   const today = new Date().toISOString().split('T')[0];
-  //   const response = await fetch(
-  //     `https://v3.football.api-sports.io/fixtures?league=${apiId}&season=2025&from=${today}&to=${today}`,
-  //     { headers: { 'x-apisports-key': FOOTBALL_API_KEY } }
-  //   );
-  //   const data = await response.json();
-  //   return transformAPIFootballResponse(data.response);
-  // }
+  // Obtenemos la fecha de hoy en formato YYYY-MM-DD
+  const today = new Date().toISOString().split('T')[0];
+  const apiId = LEAGUE_API_IDS[leagueId];
 
-  // 🔌 BACKEND: Uncomment when backend is ready
-  // if (BACKEND_URL) {
-  //   const res = await fetch(`${BACKEND_URL}/api/football/${leagueId}/current`);
-  //   return res.json();
-  // }
+  // Si tenemos el ID real mapeado, intentamos llamar al Backend
+  if (apiId) {
+    try {
+      // Llamada a TU backend (Serverless Function) en /api/fixtures
+      const response = await fetch(`/api/fixtures?sport=football&leagueId=${apiId}&date=${today}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Si la API devuelve datos reales, los usamos
+        if (data.response && data.response.length > 0) {
+          return transformAPIFootballResponse(data.response);
+        }
+        console.log(`No hay partidos reales hoy para ${leagueId}, usando mock data.`);
+      }
+    } catch (error) {
+      console.error("Error conectando con API Real:", error);
+      // Fallback silencioso a mock data si falla la red o la API
+    }
+  }
 
-  // MOCK: Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300));
+  // FALLBACK: Si falla la API o no hay partidos, usamos datos de prueba
   return MOCK_MATCHES[leagueId] || [];
 }
 
@@ -136,17 +140,17 @@ export function getTodayInfo() {
 // ============================================================
 // TRANSFORMER — Convert real API-Football response to Match[]
 // ============================================================
-// function transformAPIFootballResponse(fixtures: any[]): Match[] {
-//   return fixtures.map(f => ({
-//     id: f.fixture.id.toString(),
-//     homeTeam: { name: f.teams.home.name, abbreviation: f.teams.home.name.slice(0, 3).toUpperCase() },
-//     awayTeam: { name: f.teams.away.name, abbreviation: f.teams.away.name.slice(0, 3).toUpperCase() },
-//     date: f.fixture.date.split('T')[0],
-//     time: f.fixture.date.split('T')[1].slice(0, 5),
-//     leagueId: f.league.id.toString(),
-//     sport: 'football',
-//     status: f.fixture.status.short === 'NS' ? 'scheduled' : 'finished',
-//     venue: f.fixture.venue?.name,
-//     matchday: f.league.round,
-//   }));
-// }
+function transformAPIFootballResponse(fixtures: any[]): Match[] {
+  return fixtures.map(f => ({
+    id: f.fixture.id.toString(),
+    homeTeam: { name: f.teams.home.name, abbreviation: f.teams.home.name.substring(0, 3).toUpperCase() },
+    awayTeam: { name: f.teams.away.name, abbreviation: f.teams.away.name.substring(0, 3).toUpperCase() },
+    date: f.fixture.date.split('T')[0],
+    time: f.fixture.date.split('T')[1].slice(0, 5),
+    leagueId: f.league.id ? f.league.id.toString() : 'unknown',
+    sport: 'football',
+    status: f.fixture.status.short === 'NS' ? 'scheduled' : 'finished',
+    venue: f.fixture.venue?.name || 'Unknown Stadium',
+    matchday: typeof f.league.round === 'string' ? parseInt(f.league.round.replace(/\D/g, '')) || 0 : 0,
+  }));
+}
