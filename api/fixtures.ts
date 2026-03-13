@@ -85,7 +85,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'La clave de API para deportes no está configurada en el servidor.' });
   }
 
-  const url = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&date=${date}`;
+  const url = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2024&date=${date}`;
 
   try {
     // 3. Realizar la llamada a la API externa
