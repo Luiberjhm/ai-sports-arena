@@ -45,37 +45,54 @@ import {
 // ============================================================
 // LEAGUE ID MAPPINGS — For real API connections
 // ============================================================
-const LEAGUE_API_IDS: Record<string, number> = {
-  // API-Football league IDs
-  'premier-league': 39,
-  'laliga': 140,
-  'serie-a': 135,
-  'bundesliga': 78,
-  'ligue-1': 61,
-  'champions-league': 2,
+const LEAGUE_API_IDS: Record<string, string> = {
+  // TheSportsDB league IDs
+  'premier-league': '4328', // English Premier League
+  'laliga': '4335',         // Spanish La Liga
+  'serie-a': '4332',        // Italian Serie A
+  'bundesliga': '4331',     // German Bundesliga
+  'ligue-1': '4334',        // French Ligue 1
+  'champions-league': '4480',// UEFA Champions League
 };
 
 // ============================================================
 // GET FOOTBALL MATCHES — By league
 // ============================================================
 export async function getFootballMatchday(leagueId: string): Promise<Match[]> {
-  // Obtenemos la fecha de hoy en formato YYYY-MM-DD
-  const today = new Date().toISOString().split('T')[0];
   const apiId = LEAGUE_API_IDS[leagueId];
 
   // Si tenemos el ID real mapeado, intentamos llamar al Backend
   if (apiId) {
     try {
-      // Llamada a TU backend (Serverless Function) en /api/fixtures
-      const response = await fetch(`/api/fixtures?sport=football&leagueId=${apiId}&date=${today}`);
-      
+      // Usamos la API key pública '1' y pedimos TODA la temporada actual (2024-2025)
+      // Evitamos el endpoint eventsnextleague porque en el plan gratis inyecta partidos falsos del 2022.
+      const response = await fetch(`https://www.thesportsdb.com/api/v1/json/1/eventsseason.php?id=${apiId}&s=2024-2025`);
+
       if (response.ok) {
         const data = await response.json();
-        // Si la API devuelve datos reales, los usamos
-        if (data.response && data.response.length > 0) {
-          return transformAPIFootballResponse(data.response);
+        if (data.events && data.events.length > 0) {
+          // 1. Obtener fecha de hoy (a las 00:00 para no perder partidos de hoy)
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          // 2. Filtrar estrictamente partidos que NO se hayan jugado (hoy o en el futuro)
+          const futureEvents = data.events.filter((e: any) => {
+            if (!e.dateEvent) return false;
+            return new Date(e.dateEvent) >= today;
+          });
+
+          if (futureEvents.length > 0) {
+            // 3. Ordenar cronológicamente (el partido más próximo primero)
+            futureEvents.sort((a: any, b: any) => new Date(a.dateEvent).getTime() - new Date(b.dateEvent).getTime());
+
+            // 4. Aislar la JORNADA EXACTA más próxima (para no mezclar con partidos del mes siguiente)
+            const nextRound = futureEvents[0].intRound;
+            const upcomingMatchday = futureEvents.filter((e: any) => e.intRound === nextRound);
+
+            return transformTheSportsDBResponse(upcomingMatchday, leagueId);
+          }
         }
-        console.log(`No hay partidos reales hoy para ${leagueId}, usando mock data.`);
+        console.log(`No hay próximos partidos en TheSportsDB para ${leagueId}, usando mock data.`);
       }
     } catch (error) {
       console.error("Error conectando con API Real:", error);
@@ -138,19 +155,19 @@ export function getTodayInfo() {
 }
 
 // ============================================================
-// TRANSFORMER — Convert real API-Football response to Match[]
+// TRANSFORMER — Convert TheSportsDB response to Match[]
 // ============================================================
-function transformAPIFootballResponse(fixtures: any[]): Match[] {
-  return fixtures.map(f => ({
-    id: f.fixture.id.toString(),
-    homeTeam: { name: f.teams.home.name, abbreviation: f.teams.home.name.substring(0, 3).toUpperCase() },
-    awayTeam: { name: f.teams.away.name, abbreviation: f.teams.away.name.substring(0, 3).toUpperCase() },
-    date: f.fixture.date.split('T')[0],
-    time: f.fixture.date.split('T')[1].slice(0, 5),
-    leagueId: f.league.id ? f.league.id.toString() : 'unknown',
+function transformTheSportsDBResponse(events: any[], leagueId: string): Match[] {
+  return events.map(e => ({
+    id: e.idEvent,
+    homeTeam: { name: e.strHomeTeam, abbreviation: e.strHomeTeam.substring(0, 3).toUpperCase() },
+    awayTeam: { name: e.strAwayTeam, abbreviation: e.strAwayTeam.substring(0, 3).toUpperCase() },
+    date: e.dateEvent || 'TBD',
+    time: e.strTime ? e.strTime.substring(0, 5) : '00:00',
+    leagueId: leagueId,
     sport: 'football',
-    status: f.fixture.status.short === 'NS' ? 'scheduled' : 'finished',
-    venue: f.fixture.venue?.name || 'Unknown Stadium',
-    matchday: typeof f.league.round === 'string' ? parseInt(f.league.round.replace(/\D/g, '')) || 0 : 0,
+    status: 'scheduled', // Al usar "eventsnextleague", todos son programados futuros
+    venue: e.strVenue || 'Estadio por definir',
+    matchday: parseInt(e.intRound) || 0,
   }));
 }

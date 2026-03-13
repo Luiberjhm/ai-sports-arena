@@ -184,7 +184,9 @@ export function FootballPage() {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Calendar size={12} style={{ color: '#666' }} />
-                      <span style={{ fontSize: '12px', color: '#666' }}>14-16 Marzo 2026</span>
+                      <span style={{ fontSize: '12px', color: '#666' }}>
+                        {matches.length > 0 ? new Date(matches[0].date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : 'Próxima jornada'}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Activity size={12} style={{ color: '#666' }} />
