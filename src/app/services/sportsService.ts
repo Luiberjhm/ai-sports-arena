@@ -78,13 +78,22 @@ export async function getFootballMatchday(leagueId: string): Promise<Match[]> {
 
       if (response.ok) {
         const data = await response.json();
+
+        // API-Sports a veces devuelve 200 OK pero incluye los errores en el JSON
+        if (data.errors && Object.keys(data.errors).length > 0) {
+          console.error("🛑 Error interno de API-Sports:", data.errors);
+        }
+
         if (data.response && data.response.length > 0) {
           return transformAPIFootballResponse(data.response, leagueId);
         }
-        console.log(`No hay próximos partidos en API-Football para ${leagueId}.`);
+        console.log(`⚠️ No hay próximos partidos en API-Football para ${leagueId}.`);
+      } else {
+        // Si la clave es inválida, suele dar error 401 o 403
+        console.error(`🛑 Error HTTP ${response.status}: Verifica que tu API Key sea correcta y esté activa.`);
       }
     } catch (error) {
-      console.error("Error conectando con API Real:", error);
+      console.error("🛑 Error de Red conectando con API Real:", error);
       // Fallback silencioso a mock data si falla la red o la API
     }
   }
