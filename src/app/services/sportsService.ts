@@ -65,14 +65,14 @@ export async function getFootballMatchday(leagueId: string): Promise<Match[]> {
   if (apiId) {
     try {
       // AQUI PONES TU API KEY REAL DE API-FOOTBALL
-      const API_KEY = 'PON_TU_API_KEY_AQUI';
+      // Intenta leer la variable de entorno, si no está, usa tu clave directamente
+      const API_KEY = import.meta.env.VITE_SPORTS_API_KEY || 'a14758a7929301bbfb4a4f250ae9134b';
 
       // Pedimos exactamente los próximos 10 partidos de la temporada 2024. ¡Cero pasado!
       const response = await fetch(`https://v3.football.api-sports.io/fixtures?league=${apiId}&season=2024&next=10`, {
         method: 'GET',
         headers: {
-          'x-apisports-key': API_KEY,
-          'x-apisports-host': 'v3.football.api-sports.io'
+          'x-apisports-key': API_KEY
         }
       });
 
