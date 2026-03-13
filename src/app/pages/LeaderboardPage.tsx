@@ -1,7 +1,6 @@
 import { motion } from 'motion/react';
 import { Crown, TrendingUp, TrendingDown, Minus, Target } from 'lucide-react';
 import { AI_MODELS, SPORT_CONFIGS } from '../data/mockData';
-import { PerformanceHeatmap } from '../components/shared/PerformanceHeatmap';
 
 export function LeaderboardPage() {
   const sorted = [...AI_MODELS].sort((a, b) => b.accuracy - a.accuracy);
@@ -28,59 +27,74 @@ export function LeaderboardPage() {
       </div>
 
       <div className="px-4 md:px-8 py-6 space-y-6">
-        {/* Podium */}
-        <div className="grid grid-cols-3 gap-4">
-          {[sorted[1], sorted[0], sorted[2]].map((model, podiumIndex) => {
-            const actualRank = podiumIndex === 0 ? 2 : podiumIndex === 1 ? 1 : 3;
-            const heights = ['h-28', 'h-36', 'h-24'];
-            const podiumColors = ['#C0C0C0', '#FFD700', '#CD7F32'];
+        {/* New Cylindrical Podium */}
+        <div className="flex items-end justify-center gap-4 md:gap-8 pb-8 pt-4 min-h-[340px]">
+          {[sorted[1], sorted[0], sorted[2]].map((model, index) => {
+            // Index 0 es el 2do lugar (izquierda)
+            // Index 1 es el 1er lugar (centro)
+            // Index 2 es el 3er lugar (derecha)
+            const isFirst = index === 1;
+            const isSecond = index === 0;
+            const isThird = index === 2;
+            
+            const rank = isFirst ? 1 : isSecond ? 2 : 3;
+            const color = isFirst ? '#FFD700' : isSecond ? '#C0C0C0' : '#CD7F32';
+            const height = isFirst ? 'h-64' : isSecond ? 'h-48' : 'h-36';
+            
+            // Efecto cilindro con gradientes
+            const cylinderGradient = `linear-gradient(180deg, ${color}20 0%, ${color}05 100%)`;
+            const topGradient = `linear-gradient(180deg, ${color}40 0%, ${color}10 100%)`;
 
             return (
               <motion.div
                 key={model.id}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: podiumIndex * 0.1 + 0.2 }}
-                className="flex flex-col items-center"
+                transition={{ delay: index * 0.15 + 0.2, type: 'spring', stiffness: 100 }}
+                className="flex flex-col items-center w-24 md:w-32"
               >
-                {/* Card */}
-                <div
-                  className="w-full rounded-2xl p-4 text-center mb-2"
-                  style={{
-                    background: '#141414',
-                    border: `1px solid ${podiumColors[podiumIndex]}30`,
-                    boxShadow: podiumIndex === 1 ? `0 0 32px ${podiumColors[1]}15` : undefined,
-                  }}
-                >
-                  {actualRank === 1 && <span style={{ fontSize: '20px' }}>👑</span>}
+                {/* Avatar & Info floating above */}
+                <div className="flex flex-col items-center mb-3 space-y-1">
+                  {isFirst && <Crown size={24} color="#FFD700" className="mb-1 drop-shadow-lg" />}
+                  
                   <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-2"
-                    style={{ background: `${model.color}20`, border: `1px solid ${model.color}40` }}
+                    className="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-lg relative z-10"
+                    style={{ 
+                      background: '#141414', 
+                      border: `2px solid ${model.color}`,
+                      boxShadow: `0 0 15px ${model.color}30`
+                    }}
                   >
                     <div className="w-4 h-4 rounded-full" style={{ background: model.color }} />
                   </div>
-                  <p className="text-white" style={{ fontSize: '13px', fontWeight: 700 }}>
+                  
+                  <div className="text-center">
+                    <p className="text-white text-sm font-bold truncate w-full">
                     {model.name}
                   </p>
-                  <p style={{ fontSize: '11px', color: '#555' }}>{model.provider}</p>
                   <p
-                    style={{
-                      fontSize: '22px',
-                      fontWeight: 800,
-                      color: podiumColors[podiumIndex],
-                      marginTop: '6px',
-                    }}
-                  >
+                      style={{ color, fontWeight: 800, fontSize: '16px' }}
+                    >
                     {model.accuracy}%
                   </p>
+                  </div>
                 </div>
-                {/* Podium base */}
+
+                {/* Cylinder Bar */}
                 <div
-                  className={`w-full rounded-t-xl flex items-center justify-center ${heights[podiumIndex]}`}
-                  style={{ background: `${podiumColors[podiumIndex]}20`, border: `1px solid ${podiumColors[podiumIndex]}25` }}
+                  className={`w-full ${height} rounded-t-2xl relative flex items-end justify-center pb-4 backdrop-blur-sm transition-all hover:brightness-125`}
+                  style={{ 
+                    background: cylinderGradient,
+                    border: `1px solid ${color}30`,
+                    borderBottom: 'none',
+                    boxShadow: isFirst ? `0 0 40px ${color}10` : 'none'
+                  }}
                 >
-                  <span style={{ fontSize: '28px', fontWeight: 900, color: podiumColors[podiumIndex], opacity: 0.5 }}>
-                    {actualRank}
+                  {/* Top "lid" highlight for 3D effect */}
+                  <div className="absolute top-0 inset-x-0 h-4 bg-white/5 rounded-t-2xl" />
+                  
+                  <span style={{ fontSize: '40px', fontWeight: 900, color: color, opacity: 0.3 }}>
+                    {rank}
                   </span>
                 </div>
               </motion.div>
@@ -217,9 +231,6 @@ export function LeaderboardPage() {
             );
           })}
         </div>
-
-        {/* Heatmap */}
-        <PerformanceHeatmap />
 
         {/* Sport-by-sport mini table */}
         <div

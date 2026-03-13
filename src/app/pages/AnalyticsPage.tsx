@@ -18,7 +18,6 @@ import {
   PolarAngleAxis,
 } from 'recharts';
 import { AI_MODELS, ANALYTICS_DATA, SPORT_ACCURACY_DATA } from '../data/mockData';
-import { PerformanceHeatmap } from '../components/shared/PerformanceHeatmap';
 
 const MODEL_COLORS: Record<string, string> = {
   ChatGPT: '#74AA9C',
@@ -266,9 +265,6 @@ export function AnalyticsPage() {
             </RadarChart>
           </ResponsiveContainer>
         </div>
-
-        {/* Heatmap */}
-        <PerformanceHeatmap />
       </div>
     </div>
   );

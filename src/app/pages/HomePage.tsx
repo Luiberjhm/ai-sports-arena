@@ -135,12 +135,6 @@ export function HomePage() {
             }}
           >
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span style={{ fontSize: '16px' }}>🏴󠁧󠁢󠁥󠁮󠁧󠁿</span>
-                <span style={{ fontSize: '11px', color: '#FF6200', fontWeight: 700, letterSpacing: '0.08em' }}>
-                  JORNADA DESTACADA
-                </span>
-              </div>
               <h2 className="text-white" style={{ fontSize: '18px', fontWeight: 800 }}>
                 Premier League · Jornada 29
               </h2>
