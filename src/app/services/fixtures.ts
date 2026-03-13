@@ -33,7 +33,6 @@ export default async function handler(req: any, res: any) {
   const baseUrl = BASE_URLS[sport as string] || BASE_URLS['football'];
   
   // Construir la URL específica (Endpoint de Fixtures/Games)
-  // Nota: Cada deporte tiene parámetros ligeramente distintos, aquí estandarizamos para fútbol/games
   const endpoint = sport === 'football' ? '/fixtures' : '/games';
   
   try {
