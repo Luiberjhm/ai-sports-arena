@@ -10,6 +10,32 @@ import { analyzeMatchday, PredictionMap } from '../services/aiService';
 import { getFootballMatchday } from '../services/sportsService';
 import { AIPrediction, AnalysisStatus, League, Match } from '../types';
 
+// ── localStorage helpers ─────────────────────────────────────────────────
+const STORAGE_KEY = (leagueId: string) => `ai-arena-football-${leagueId}`;
+
+function saveAnalysis(leagueId: string, predictions: PredictionMap) {
+  try {
+    localStorage.setItem(STORAGE_KEY(leagueId), JSON.stringify({
+      predictions,
+      savedAt: new Date().toISOString(),
+    }));
+  } catch { /* storage full or unavailable */ }
+}
+
+function loadAnalysis(leagueId: string): PredictionMap | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY(leagueId));
+    if (!raw) return null;
+    const { predictions, savedAt } = JSON.parse(raw);
+    // Only restore if saved today
+    const today = new Date().toISOString().split('T')[0];
+    if (savedAt?.startsWith(today)) return predictions as PredictionMap;
+    localStorage.removeItem(STORAGE_KEY(leagueId));
+    return null;
+  } catch { return null; }
+}
+
+// ── Component ────────────────────────────────────────────────────────────
 export function FootballPage() {
   const [selectedLeague, setSelectedLeague] = useState<League>(FOOTBALL_LEAGUES[0]);
   const [status, setStatus] = useState<AnalysisStatus>('idle');
@@ -21,10 +47,20 @@ export function FootballPage() {
 
   useEffect(() => {
     setLoadingMatches(true);
-    setStatus('idle');
-    setPredictions({});
-    setCompletedModels(new Set());
     setCurrentMatchday(undefined);
+
+    // Restore saved analysis for this league (same day only)
+    const saved = loadAnalysis(selectedLeague.id);
+    if (saved && Object.keys(saved).length > 0) {
+      setPredictions(saved);
+      setCompletedModels(new Set(Object.keys(saved)));
+      setStatus('complete');
+    } else {
+      setStatus('idle');
+      setPredictions({});
+      setCompletedModels(new Set());
+    }
+
     getFootballMatchday(selectedLeague.id).then(result => {
       setMatches(result.matches);
       setCurrentMatchday(result.matches.find(m => m.matchday)?.matchday);
@@ -39,11 +75,14 @@ export function FootballPage() {
     setCompletedModels(new Set());
 
     try {
+      const finalPredictions: PredictionMap = {};
       await analyzeMatchday(matches, selectedLeague, (modelId, prediction) => {
+        finalPredictions[modelId] = prediction;
         setPredictions(prev => ({ ...prev, [modelId]: prediction }));
         setCompletedModels(prev => new Set([...prev, modelId]));
       });
       setStatus('complete');
+      saveAnalysis(selectedLeague.id, finalPredictions);
     } catch {
       setStatus('error');
     }

@@ -61,6 +61,9 @@ STRICT RULES
 5. Each analysis field: one sentence, maximum 15 words.
 6. Summary: maximum 30 words, betting-focused, actionable.
 
+LANGUAGE
+All text values in the JSON response must be written in Spanish. Team names remain in their original language.
+
 OUTPUT
 Output ONLY raw JSON. No markdown. No code blocks. No text before or after.
 Start your response with { and end with }.

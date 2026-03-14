@@ -108,11 +108,11 @@ export function Sidebar() {
         </div>
         <div className="flex items-center gap-2 mb-1">
           <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#22C55E' }} />
-          <span style={{ fontSize: '11px', color: '#777' }}>APIs deportivas: <span style={{ color: '#22C55E' }}>Mock activo</span></span>
+          <span style={{ fontSize: '11px', color: '#777' }}>APIs deportivas: <span style={{ color: '#22C55E' }}>ESPN activo</span></span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#FF6200' }} />
-          <span style={{ fontSize: '11px', color: '#777' }}>5 IAs: <span style={{ color: '#FF6200' }}>Listas</span></span>
+          <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#22C55E' }} />
+          <span style={{ fontSize: '11px', color: '#777' }}>5 IAs: <span style={{ color: '#22C55E' }}>Listas</span></span>
         </div>
       </div>
     </aside>
