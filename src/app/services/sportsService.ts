@@ -68,8 +68,15 @@ export async function getFootballMatchday(leagueId: string): Promise<Match[]> {
       // Intenta leer la variable de entorno, si no está, usa tu clave directamente
       const API_KEY = import.meta.env.VITE_SPORTS_API_KEY || 'a14758a7929301bbfb4a4f250ae9134b';
 
-      // Pedimos exactamente los próximos 10 partidos de la temporada 2024. ¡Cero pasado!
-      const response = await fetch(`https://v3.football.api-sports.io/fixtures?league=${apiId}&season=2024&next=10`, {
+      // Calculamos la fecha de hoy y la fecha de dentro de 14 días
+      const today = new Date();
+      const fromDate = today.toISOString().split('T')[0];
+      const futureDate = new Date(today);
+      futureDate.setDate(today.getDate() + 14);
+      const toDate = futureDate.toISOString().split('T')[0];
+
+      // Usamos from y to porque el plan gratuito no permite el parámetro "next"
+      const response = await fetch(`https://v3.football.api-sports.io/fixtures?league=${apiId}&season=2024&from=${fromDate}&to=${toDate}`, {
         method: 'GET',
         headers: {
           'x-apisports-key': API_KEY
@@ -85,7 +92,10 @@ export async function getFootballMatchday(leagueId: string): Promise<Match[]> {
         }
 
         if (data.response && data.response.length > 0) {
-          return transformAPIFootballResponse(data.response, leagueId);
+          // Filtramos estrictamente los partidos que no han comenzado (NS = Not Started, TBD = To Be Defined)
+          // y cortamos la lista a máximo 10 partidos para no saturar tu interfaz
+          const upcomingMatches = data.response.filter((f: any) => ['NS', 'TBD', 'PST'].includes(f.fixture.status.short));
+          return transformAPIFootballResponse(upcomingMatches.slice(0, 10), leagueId);
         }
         console.log(`⚠️ No hay próximos partidos en API-Football para ${leagueId}.`);
       } else {
