@@ -14,6 +14,31 @@ interface SportsPageProps {
   sport: Sport;
 }
 
+// ── localStorage helpers ─────────────────────────────────────────────────
+const STORAGE_KEY = (sportId: string) => `ai-arena-sport-${sportId}`;
+
+function saveAnalysis(sportId: string, predictions: PredictionMap) {
+  try {
+    localStorage.setItem(STORAGE_KEY(sportId), JSON.stringify({
+      predictions,
+      savedAt: new Date().toISOString(),
+    }));
+  } catch { /* storage full or unavailable */ }
+}
+
+function loadAnalysis(sportId: string): PredictionMap | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY(sportId));
+    if (!raw) return null;
+    const { predictions, savedAt } = JSON.parse(raw);
+    const today = new Date().toISOString().split('T')[0];
+    if (savedAt?.startsWith(today)) return predictions as PredictionMap;
+    localStorage.removeItem(STORAGE_KEY(sportId));
+    return null;
+  } catch { return null; }
+}
+
+// ── Component ────────────────────────────────────────────────────────────
 export function SportsPage({ sport }: SportsPageProps) {
   const [status, setStatus] = useState<AnalysisStatus>('idle');
   const [predictions, setPredictions] = useState<PredictionMap>({});
@@ -34,9 +59,16 @@ export function SportsPage({ sport }: SportsPageProps) {
   const info = SPORT_INFO[sport];
 
   useEffect(() => {
-    setStatus('idle');
-    setPredictions({});
-    setCompletedModels(new Set());
+    const saved = loadAnalysis(sport);
+    if (saved && Object.keys(saved).length > 0) {
+      setPredictions(saved);
+      setCompletedModels(new Set(Object.keys(saved)));
+      setStatus('complete');
+    } else {
+      setStatus('idle');
+      setPredictions({});
+      setCompletedModels(new Set());
+    }
     getSportMatches(sport).then(result => setMatches(result.matches));
   }, [sport]);
 
@@ -57,11 +89,14 @@ export function SportsPage({ sport }: SportsPageProps) {
     };
 
     try {
+      const finalPredictions: PredictionMap = {};
       await analyzeMatchday(matches, mockLeague, (modelId, prediction) => {
+        finalPredictions[modelId] = prediction;
         setPredictions(prev => ({ ...prev, [modelId]: prediction }));
         setCompletedModels(prev => new Set([...prev, modelId]));
       });
       setStatus('complete');
+      saveAnalysis(sport, finalPredictions);
     } catch {
       setStatus('error');
     }
@@ -246,10 +281,9 @@ export function SportsPage({ sport }: SportsPageProps) {
                 ESTADO DE CONEXIÓN
               </h4>
               <div className="space-y-2.5">
-                <ConnectionRow label="API Deportiva" status="mock" note="Listo para conectar" />
-                <ConnectionRow label="Backend NestJS" status="pending" note="Configura VITE_BACKEND_URL" />
-                <ConnectionRow label="Supabase DB" status="pending" note="Listo para conectar" />
-                <ConnectionRow label="5 IAs" status="mock" note="Mock activo" />
+                <ConnectionRow label="API Deportiva" status="connected" note="ESPN activo" />
+                <ConnectionRow label="5 IAs" status="connected" note="Vercel Functions" />
+                <ConnectionRow label="Supabase DB" status="pending" note="Próximamente" />
               </div>
             </div>
           </div>

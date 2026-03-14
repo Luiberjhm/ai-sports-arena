@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Zap, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Zap, CheckCircle2, Loader2 } from 'lucide-react';
 import { AnalysisStatus } from '../../types';
 
 interface RunButtonProps {
@@ -10,7 +10,7 @@ interface RunButtonProps {
 }
 
 export function RunButton({ status, matchCount, onRun, label }: RunButtonProps) {
-  const isDisabled = status === 'loading' || matchCount === 0;
+  const isDisabled = status === 'loading' || status === 'complete' || matchCount === 0;
 
   return (
     <div className="flex flex-col items-center gap-2">
