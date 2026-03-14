@@ -5,50 +5,89 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
  * VERCEL FUNCTION — AI Analysis Proxy
  * ============================================================
  * POST /api/analyze
- * Body: { model: 'chatgpt' | 'gemini' | 'claude' | 'llama' | 'mistral', payload: AnalysisPayload }
- *
- * Routes server-side to the correct AI API so keys are never
- * exposed to the browser.
+ * Body: { model: 'chatgpt' | 'gemini' | 'claude' | 'llama' | 'mistral', payload }
  * ============================================================
  */
 
-const SYSTEM_PROMPT = `You are a professional sports analyst specialized in probabilistic prediction.
+// ── Definitive System Prompt ───────────────────────────────────────────────
+const SYSTEM_PROMPT = `You are an elite sports betting analyst and data scientist specialized in probabilistic prediction for professional sports competitions.
 
-Analyze the sports matchday provided and identify the single best bet — the team with the highest probability of winning.
+Your role combines:
+• Sports analytics and team performance evaluation
+• Betting market analysis and value identification
+• Risk assessment for intermediate-level bettors
 
-Your analysis must consider:
-• Relative team strength and current form
-• Home advantage
-• Recent results and momentum
-• Historical head-to-head performance
+You think like a professional quant analyst at a top sportsbook.
 
-Rules:
-1. Select ONE team (home or away) with the highest winning probability.
-2. Estimate probability as an integer between 65 and 92.
-3. Provide a concise explanation in 25 words or less.
-4. Do NOT invent specific statistics or scores.
+MISSION
+Analyze all scheduled matches in the given matchday.
+Select the ONE bet with the clearest, most multi-dimensional statistical advantage. Your pick must be the most defensible bet of the entire matchday.
 
-Respond ONLY with valid JSON (no markdown, no extra text):
-{"team_pick": "Team Name", "probability": 78, "summary": "Brief reason"}`;
+MANDATORY ANALYTICAL PROCESS (follow in order)
 
+Step 1 — Evaluate EACH match independently across 4 dimensions:
+  • TEAM STRENGTH: Squad quality, depth, player caliber, league position
+  • MOMENTUM: Recent form trend, scoring consistency, defensive stability
+  • TACTICAL EDGE: Style matchup, attacking vs defensive compatibility
+  • CONTEXT: Home/away advantage, fixture importance, competitive pressure
+
+Step 2 — Compare ALL evaluated matchups.
+  Identify which match has the CLEAREST one-sided advantage.
+  Your pick must be justified relative to the ENTIRE matchday.
+
+Step 3 — Define the optimal betting market:
+  Choose the market that best captures the identified advantage:
+  • "Match Winner" — clear favorite with dominant advantage
+  • "Double Chance" — strong team but opponent offers resistance
+  • "Over 2.5 Goals" — high-scoring profile on both sides
+  • "Under 2.5 Goals" — defensive profile, low-scoring context
+
+PROBABILITY CALIBRATION
+• 85–90%: Overwhelming dominance across all 4 dimensions
+• 75–84%: Clear advantage in 3+ dimensions
+• 70–74%: Favored but with meaningful competitive resistance
+• Never assign > 90% — sports are inherently unpredictable
+
+RISK CALIBRATION
+• Low: 3–4 dimensions clearly favor the pick
+• Medium: 2–3 dimensions favor the pick, one factor is uncertain
+• High: Pick is based on 1–2 dominant factors, real upset risk exists
+
+STRICT RULES
+1. Select ONLY ONE team and ONE betting market for the entire matchday.
+2. Probability must be an integer between 70 and 90.
+3. Base analysis on general team knowledge, tactical patterns, and historical competitive tendencies.
+4. Do NOT cite specific match scores, exact statistics, injury reports, or real-time data — reason from principles and general knowledge.
+5. Each analysis field: one sentence, maximum 15 words.
+6. Summary: maximum 30 words, betting-focused, actionable.
+
+OUTPUT
+Output ONLY raw JSON. No markdown. No code blocks. No text before or after.
+Start your response with { and end with }.
+
+{"team_pick":"Team Name","probability":82,"confidence_level":"High","risk_level":"Low","bet_market":"Match Winner","analysis":{"team_strength":"One sentence max 15 words.","momentum":"One sentence max 15 words.","tactical_edge":"One sentence max 15 words.","context":"One sentence max 15 words."},"summary":"Max 30 words actionable betting-focused justification."}`;
+
+// ── Dynamic user prompt ────────────────────────────────────────────────────
 function buildUserPrompt(payload: any): string {
   const matchList = (payload.matches as any[])
-    .map((m, i) =>
-      `${i + 1}. ${m.homeTeam} vs ${m.awayTeam} (${m.date} ${m.time}${m.venue ? ' @ ' + m.venue : ''})`
-    )
+    .map((m, i) => {
+      const venue = m.venue ? ` @ ${m.venue}` : '';
+      return `${i + 1}. ${m.homeTeam} (Home) vs ${m.awayTeam} (Away) — ${m.date} ${m.time}${venue}`;
+    })
     .join('\n');
 
   return `Sport: ${payload.sport}
 League: ${payload.league}
 Matchday: ${payload.matchday}
 
-Upcoming matches:
+Scheduled matches:
 ${matchList}
 
-Pick the single strongest bet. Respond with JSON only.`;
+Evaluate ALL matches. Select the single strongest bet of this matchday.
+Target: intermediate bettor seeking one clear, low-ambiguity recommendation.`;
 }
 
-// ── OpenAI-compatible caller (ChatGPT, Groq, Mistral) ──────────────────────
+// ── OpenAI-compatible caller (ChatGPT, Groq, Mistral) ─────────────────────
 async function callOpenAICompat(
   userPrompt: string,
   apiKey: string,
@@ -64,7 +103,7 @@ async function callOpenAICompat(
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userPrompt },
       ],
-      max_tokens: 150,
+      max_tokens: 350,
       temperature: 0.3,
     }),
   });
@@ -81,7 +120,7 @@ async function callGemini(userPrompt: string, apiKey: string): Promise<string> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: `${SYSTEM_PROMPT}\n\n${userPrompt}` }] }],
-      generationConfig: { maxOutputTokens: 150, temperature: 0.3 },
+      generationConfig: { maxOutputTokens: 350, temperature: 0.3 },
     }),
   });
   const data = await res.json();
@@ -100,7 +139,7 @@ async function callAnthropic(userPrompt: string, apiKey: string): Promise<string
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 150,
+      max_tokens: 350,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
     }),
@@ -110,18 +149,39 @@ async function callAnthropic(userPrompt: string, apiKey: string): Promise<string
   return data.content[0].text;
 }
 
-// ── JSON parser (handles markdown code blocks from some models) ────────────
-function parseResponse(text: string): { team_pick: string; probability: number; summary: string } {
-  const jsonMatch = text.match(/\{[\s\S]*?\}/);
-  if (!jsonMatch) throw new Error(`No JSON in response: ${text.substring(0, 100)}`);
+// ── JSON parser ────────────────────────────────────────────────────────────
+interface ParsedResponse {
+  team_pick: string;
+  probability: number;
+  confidence_level?: string;
+  risk_level?: string;
+  bet_market?: string;
+  analysis?: {
+    team_strength?: string;
+    momentum?: string;
+    tactical_edge?: string;
+    context?: string;
+  };
+  summary: string;
+}
+
+function parseResponse(text: string): ParsedResponse {
+  // Strip markdown code blocks if present
+  const cleaned = text.replace(/```(?:json)?\s*/g, '').replace(/```\s*/g, '').trim();
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error(`No JSON found in response: ${text.substring(0, 120)}`);
   const parsed = JSON.parse(jsonMatch[0]);
   if (!parsed.team_pick || parsed.probability == null || !parsed.summary) {
-    throw new Error('Incomplete JSON fields');
+    throw new Error('Incomplete JSON fields (team_pick, probability, summary required)');
   }
   return {
-    team_pick: String(parsed.team_pick).trim(),
-    probability: typeof parsed.probability === 'number' ? parsed.probability : parseInt(parsed.probability, 10),
-    summary: String(parsed.summary).trim(),
+    team_pick:        String(parsed.team_pick).trim(),
+    probability:      typeof parsed.probability === 'number' ? parsed.probability : parseInt(parsed.probability, 10),
+    confidence_level: parsed.confidence_level || undefined,
+    risk_level:       parsed.risk_level || undefined,
+    bet_market:       parsed.bet_market || undefined,
+    analysis:         parsed.analysis || undefined,
+    summary:          String(parsed.summary).trim(),
   };
 }
 
@@ -181,13 +241,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const parsed = parseResponse(rawText);
-    console.log(`✅ [analyze/${model}] → ${parsed.team_pick} (${parsed.probability}%)`);
+    console.log(`✅ [analyze/${model}] → ${parsed.team_pick} (${parsed.probability}%) | ${parsed.bet_market || 'Match Winner'} | Risk: ${parsed.risk_level || '?'}`);
 
     return res.status(200).json({
-      modelId:   model,
-      teamPick:  parsed.team_pick,
-      probability: parsed.probability,
-      summary:   parsed.summary,
+      modelId:         model,
+      teamPick:        parsed.team_pick,
+      probability:     parsed.probability,
+      confidenceLevel: parsed.confidence_level,
+      riskLevel:       parsed.risk_level,
+      betMarket:       parsed.bet_market,
+      analysis:        parsed.analysis
+        ? {
+            teamStrength: parsed.analysis.team_strength || '',
+            momentum:     parsed.analysis.momentum || '',
+            tacticalEdge: parsed.analysis.tactical_edge || '',
+            context:      parsed.analysis.context || '',
+          }
+        : undefined,
+      summary: parsed.summary,
     });
 
   } catch (err: any) {

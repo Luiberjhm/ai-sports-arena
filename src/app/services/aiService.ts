@@ -127,14 +127,18 @@ async function callAnalyzeAPI(
           m.awayTeam.name === data.teamPick
       )?.id || matches[0]?.id || '';
 
-    console.log(`✅ [${modelId}] → ${data.teamPick} (${data.probability}%)`);
+    console.log(`✅ [${modelId}] → ${data.teamPick} (${data.probability}%) | ${data.betMarket || '?'} | Risk: ${data.riskLevel || '?'}`);
 
     return {
       modelId,
-      teamPick:    data.teamPick,
-      probability: data.probability,
-      summary:     data.summary,
+      teamPick:        data.teamPick,
+      probability:     data.probability,
+      summary:         data.summary,
       matchId,
+      confidenceLevel: data.confidenceLevel,
+      riskLevel:       data.riskLevel,
+      betMarket:       data.betMarket,
+      analysis:        data.analysis,
     };
 
   } catch (err: any) {
@@ -191,11 +195,25 @@ export function calculateConsensus(predictions: PredictionMap) {
 
   const [teamPick, data] = sorted[0];
 
+  // Most common betMarket among models that picked this team
+  const marketVotes: Record<string, number> = {};
+  const riskVotes: Record<string, number> = {};
+  data.models.forEach(modelId => {
+    const pred = predictions[modelId];
+    if (pred?.betMarket) marketVotes[pred.betMarket] = (marketVotes[pred.betMarket] || 0) + 1;
+    if (pred?.riskLevel) riskVotes[pred.riskLevel]   = (riskVotes[pred.riskLevel]   || 0) + 1;
+  });
+
+  const topMarket = Object.entries(marketVotes).sort(([, a], [, b]) => b - a)[0]?.[0];
+  const topRisk   = Object.entries(riskVotes).sort(([, a], [, b]) => b - a)[0]?.[0];
+
   return {
     teamPick,
     count:          data.count,
     models:         data.models,
     avgProbability: Math.round(data.totalProb / data.count),
     hasConsensus:   data.count >= 3,
+    betMarket:      topMarket,
+    riskLevel:      topRisk,
   };
 }

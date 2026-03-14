@@ -115,6 +115,32 @@ export function ConsensusPanel({ predictions, status }: ConsensusPanelProps) {
                       <p style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
                         {consensus.count}/5 IAs acuerdan • {consensus.avgProbability}% prob. media
                       </p>
+                      {/* betMarket + riskLevel */}
+                      {(consensus.betMarket || consensus.riskLevel) && (
+                        <div className="flex items-center gap-2 mt-3 flex-wrap">
+                          {consensus.betMarket && (
+                            <span
+                              className="rounded-full px-2.5 py-1"
+                              style={{ fontSize: '10px', fontWeight: 700, background: 'rgba(255,98,0,0.2)', color: '#FF6200', border: '1px solid rgba(255,98,0,0.4)', letterSpacing: '0.04em' }}
+                            >
+                              📊 {consensus.betMarket}
+                            </span>
+                          )}
+                          {consensus.riskLevel && (
+                            <span
+                              className="rounded-full px-2.5 py-1"
+                              style={{
+                                fontSize: '10px', fontWeight: 700, letterSpacing: '0.04em',
+                                background: consensus.riskLevel === 'Low' ? 'rgba(34,197,94,0.15)' : consensus.riskLevel === 'Medium' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)',
+                                color:      consensus.riskLevel === 'Low' ? '#22C55E'             : consensus.riskLevel === 'Medium' ? '#F59E0B'             : '#EF4444',
+                                border:     `1px solid ${consensus.riskLevel === 'Low' ? 'rgba(34,197,94,0.4)' : consensus.riskLevel === 'Medium' ? 'rgba(245,158,11,0.4)' : 'rgba(239,68,68,0.4)'}`,
+                              }}
+                            >
+                              ⚡ Riesgo {consensus.riskLevel === 'Low' ? 'Bajo' : consensus.riskLevel === 'Medium' ? 'Medio' : 'Alto'}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 

@@ -46,6 +46,15 @@ export interface AIPrediction {
   probability: number;
   summary: string;
   matchId?: string;
+  confidenceLevel?: 'High' | 'Medium';
+  riskLevel?: 'Low' | 'Medium' | 'High';
+  betMarket?: string;
+  analysis?: {
+    teamStrength: string;
+    momentum: string;
+    tacticalEdge: string;
+    context: string;
+  };
 }
 
 export interface ConsensusPick {
@@ -53,6 +62,8 @@ export interface ConsensusPick {
   count: number;
   models: string[];
   avgProbability: number;
+  betMarket?: string;
+  riskLevel?: string;
 }
 
 export interface League {

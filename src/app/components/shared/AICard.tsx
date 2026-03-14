@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { CheckCircle2, TrendingUp, TrendingDown, Minus, ChevronDown } from 'lucide-react';
 import { AIModel, AIPrediction, AnalysisStatus } from '../../types';
 
 interface AICardProps {
@@ -85,7 +86,14 @@ function LoadingPulse({ color }: { color: string }) {
   );
 }
 
+const RISK_COLORS: Record<string, string> = {
+  Low:    '#22C55E',
+  Medium: '#F59E0B',
+  High:   '#EF4444',
+};
+
 export function AICard({ model, status, prediction, isHighlighted }: AICardProps) {
+  const [showAnalysis, setShowAnalysis] = useState(false);
   const streakPositive = model.currentStreak > 0;
   const streakNeutral = model.currentStreak === 0;
 
@@ -228,6 +236,8 @@ export function AICard({ model, status, prediction, isHighlighted }: AICardProps
               className="flex flex-col items-center gap-2"
             >
               <ProbabilityRing probability={prediction.probability} color={model.color} />
+
+              {/* Team + market badges */}
               <div className="text-center">
                 <p className="text-white" style={{ fontSize: '15px', fontWeight: 700, lineHeight: 1.2 }}>
                   {prediction.teamPick}
@@ -236,9 +246,78 @@ export function AICard({ model, status, prediction, isHighlighted }: AICardProps
                   PICK DEL DÍA
                 </p>
               </div>
+
+              {/* betMarket + riskLevel pills */}
+              {(prediction.betMarket || prediction.riskLevel) && (
+                <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                  {prediction.betMarket && (
+                    <span
+                      className="rounded-full px-2 py-0.5"
+                      style={{ fontSize: '9px', fontWeight: 700, background: `${model.color}20`, color: model.color, border: `1px solid ${model.color}40`, letterSpacing: '0.04em' }}
+                    >
+                      {prediction.betMarket.toUpperCase()}
+                    </span>
+                  )}
+                  {prediction.riskLevel && (
+                    <span
+                      className="rounded-full px-2 py-0.5"
+                      style={{ fontSize: '9px', fontWeight: 700, background: `${RISK_COLORS[prediction.riskLevel] || '#888'}20`, color: RISK_COLORS[prediction.riskLevel] || '#888', border: `1px solid ${RISK_COLORS[prediction.riskLevel] || '#888'}40`, letterSpacing: '0.04em' }}
+                    >
+                      RIESGO {prediction.riskLevel.toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              )}
+
               <p style={{ fontSize: '11px', color: '#888', textAlign: 'center', lineHeight: 1.5 }}>
                 "{prediction.summary}"
               </p>
+
+              {/* 4-layer analysis toggle */}
+              {prediction.analysis && (
+                <div className="w-full">
+                  <button
+                    onClick={() => setShowAnalysis(v => !v)}
+                    className="w-full flex items-center justify-center gap-1 py-1"
+                    style={{ fontSize: '10px', color: '#555', background: 'none', border: 'none', cursor: 'pointer' }}
+                  >
+                    <span>VER ANÁLISIS</span>
+                    <ChevronDown
+                      size={10}
+                      style={{ transform: showAnalysis ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+                    />
+                  </button>
+                  <AnimatePresence>
+                    {showAnalysis && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <div
+                          className="rounded-xl p-3 mt-1 space-y-2"
+                          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                        >
+                          {[
+                            { label: 'FUERZA', value: prediction.analysis.teamStrength },
+                            { label: 'MOMENTO', value: prediction.analysis.momentum },
+                            { label: 'TÁCTICA', value: prediction.analysis.tacticalEdge },
+                            { label: 'CONTEXTO', value: prediction.analysis.context },
+                          ].map(({ label, value }) => value ? (
+                            <div key={label}>
+                              <span style={{ fontSize: '8px', color: model.color, fontWeight: 700, letterSpacing: '0.08em' }}>{label} </span>
+                              <span style={{ fontSize: '10px', color: '#777', lineHeight: 1.4 }}>{value}</span>
+                            </div>
+                          ) : null)}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+
               {isHighlighted && (
                 <div
                   className="flex items-center gap-1.5 rounded-full px-3 py-1"
