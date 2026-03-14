@@ -37,7 +37,7 @@ export function SportsPage({ sport }: SportsPageProps) {
     setStatus('idle');
     setPredictions({});
     setCompletedModels(new Set());
-    getSportMatches(sport).then(setMatches);
+    getSportMatches(sport).then(result => setMatches(result.matches));
   }, [sport]);
 
   const handleRun = async () => {

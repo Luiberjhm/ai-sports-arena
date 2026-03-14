@@ -142,6 +142,16 @@ export const FOOTBALL_LEAGUES: League[] = [
     currentMatchday: 8,
     season: '2025/26',
   },
+  {
+    id: 'europa-league',
+    name: 'Europa League',
+    shortName: 'UEL',
+    country: 'Europa',
+    flag: '🟠',
+    sport: 'football',
+    currentMatchday: 8,
+    season: '2025/26',
+  },
 ];
 
 // ============================================================
@@ -181,9 +191,14 @@ export const MOCK_MATCHES: Record<string, Match[]> = {
     { id: 'l1-3', homeTeam: { name: 'Lyon', abbreviation: 'OL' }, awayTeam: { name: 'Lille', abbreviation: 'LIL' }, date: '2026-03-15', time: '19:00', leagueId: 'ligue-1', sport: 'football', status: 'scheduled', matchday: 28, venue: 'Groupama Stadium' },
   ],
   'champions-league': [
-    { id: 'ucl-1', homeTeam: { name: 'Real Madrid', abbreviation: 'RMA' }, awayTeam: { name: 'Manchester City', abbreviation: 'MCI' }, date: '2026-03-11', time: '21:00', leagueId: 'champions-league', sport: 'football', status: 'scheduled', matchday: 8, venue: 'Santiago Bernabéu' },
-    { id: 'ucl-2', homeTeam: { name: 'Bayern Munich', abbreviation: 'BAY' }, awayTeam: { name: 'Arsenal', abbreviation: 'ARS' }, date: '2026-03-12', time: '21:00', leagueId: 'champions-league', sport: 'football', status: 'scheduled', matchday: 8, venue: 'Allianz Arena' },
-    { id: 'ucl-3', homeTeam: { name: 'PSG', abbreviation: 'PSG' }, awayTeam: { name: 'Inter Milan', abbreviation: 'INT' }, date: '2026-03-12', time: '21:00', leagueId: 'champions-league', sport: 'football', status: 'scheduled', matchday: 8, venue: 'Parc des Princes' },
+    { id: 'ucl-1', homeTeam: { name: 'Real Madrid', abbreviation: 'RMA' }, awayTeam: { name: 'Manchester City', abbreviation: 'MCI' }, date: '2026-03-18', time: '21:00', leagueId: 'champions-league', sport: 'football', status: 'scheduled', matchday: 8, venue: 'Santiago Bernabéu' },
+    { id: 'ucl-2', homeTeam: { name: 'Bayern Munich', abbreviation: 'BAY' }, awayTeam: { name: 'Arsenal', abbreviation: 'ARS' }, date: '2026-03-18', time: '21:00', leagueId: 'champions-league', sport: 'football', status: 'scheduled', matchday: 8, venue: 'Allianz Arena' },
+    { id: 'ucl-3', homeTeam: { name: 'PSG', abbreviation: 'PSG' }, awayTeam: { name: 'Inter Milan', abbreviation: 'INT' }, date: '2026-03-19', time: '21:00', leagueId: 'champions-league', sport: 'football', status: 'scheduled', matchday: 8, venue: 'Parc des Princes' },
+  ],
+  'europa-league': [
+    { id: 'uel-1', homeTeam: { name: 'Manchester United', abbreviation: 'MUN' }, awayTeam: { name: 'Athletic Club', abbreviation: 'ATH' }, date: '2026-03-19', time: '21:00', leagueId: 'europa-league', sport: 'football', status: 'scheduled', matchday: 8, venue: 'Old Trafford' },
+    { id: 'uel-2', homeTeam: { name: 'Eintracht Frankfurt', abbreviation: 'SGE' }, awayTeam: { name: 'Lyon', abbreviation: 'OL' }, date: '2026-03-19', time: '21:00', leagueId: 'europa-league', sport: 'football', status: 'scheduled', matchday: 8, venue: 'Deutsche Bank Park' },
+    { id: 'uel-3', homeTeam: { name: 'Lazio', abbreviation: 'LAZ' }, awayTeam: { name: 'Ajax', abbreviation: 'AJX' }, date: '2026-03-20', time: '21:00', leagueId: 'europa-league', sport: 'football', status: 'scheduled', matchday: 8, venue: 'Stadio Olimpico' },
   ],
 };
 
@@ -214,9 +229,9 @@ export const MOCK_NHL_MATCHES: Match[] = [
 ];
 
 export const MOCK_NCAA_MATCHES: Match[] = [
-  { id: 'ncaa-1', homeTeam: { name: 'Alabama Crimson Tide', abbreviation: 'ALA' }, awayTeam: { name: 'Georgia Bulldogs', abbreviation: 'UGA' }, date: '2026-03-14', time: '20:00', leagueId: 'ncaa', sport: 'ncaa', status: 'scheduled', venue: 'Bryant-Denny Stadium' },
-  { id: 'ncaa-2', homeTeam: { name: 'Ohio State Buckeyes', abbreviation: 'OSU' }, awayTeam: { name: 'Michigan Wolverines', abbreviation: 'MICH' }, date: '2026-03-14', time: '19:30', leagueId: 'ncaa', sport: 'ncaa', status: 'scheduled', venue: 'Ohio Stadium' },
-  { id: 'ncaa-3', homeTeam: { name: 'Clemson Tigers', abbreviation: 'CLEM' }, awayTeam: { name: 'Florida State Seminoles', abbreviation: 'FSU' }, date: '2026-03-15', time: '18:00', leagueId: 'ncaa', sport: 'ncaa', status: 'scheduled', venue: 'Memorial Stadium' },
+  { id: 'ncaa-1', homeTeam: { name: 'Duke Blue Devils', abbreviation: 'DUKE' }, awayTeam: { name: 'Kansas Jayhawks', abbreviation: 'KU' }, date: '2026-03-14', time: '21:00', leagueId: 'ncaa', sport: 'ncaa', status: 'scheduled', venue: 'Cameron Indoor Stadium' },
+  { id: 'ncaa-2', homeTeam: { name: 'Kentucky Wildcats', abbreviation: 'UK' }, awayTeam: { name: 'North Carolina Tar Heels', abbreviation: 'UNC' }, date: '2026-03-14', time: '19:00', leagueId: 'ncaa', sport: 'ncaa', status: 'scheduled', venue: 'Rupp Arena' },
+  { id: 'ncaa-3', homeTeam: { name: 'Gonzaga Bulldogs', abbreviation: 'GONZ' }, awayTeam: { name: 'Houston Cougars', abbreviation: 'HOU' }, date: '2026-03-15', time: '20:00', leagueId: 'ncaa', sport: 'ncaa', status: 'scheduled', venue: 'McCarthey Athletic Center' },
 ];
 
 // ============================================================

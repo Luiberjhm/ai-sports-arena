@@ -22,7 +22,7 @@ export function HomePage() {
   const featuredLeague = FOOTBALL_LEAGUES[0]; // Premier League as featured
 
   useEffect(() => {
-    getFootballMatchday('premier-league').then(setMatches);
+    getFootballMatchday('premier-league').then(result => setMatches(result.matches));
   }, []);
 
   const handleRun = async () => {

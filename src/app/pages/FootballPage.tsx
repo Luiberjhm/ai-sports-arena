@@ -23,8 +23,8 @@ export function FootballPage() {
     setStatus('idle');
     setPredictions({});
     setCompletedModels(new Set());
-    getFootballMatchday(selectedLeague.id).then(m => {
-      setMatches(m);
+    getFootballMatchday(selectedLeague.id).then(result => {
+      setMatches(result.matches);
       setLoadingMatches(false);
     });
   }, [selectedLeague]);
