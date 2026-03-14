@@ -2,169 +2,153 @@
  * ============================================================
  * AI SERVICE — AI Sports Analysis Arena
  * ============================================================
- * 
- * 🔌 BACKEND CONNECTION READY
- * 
- * To connect to real backend (NestJS):
- * 1. Set VITE_BACKEND_URL in your .env file
- * 2. Replace the mock implementation below with real fetch calls
- * 3. Your NestJS backend receives the request and calls:
- *    - OpenAI API (ChatGPT)
- *    - Google Generative AI (Gemini)
- *    - Anthropic API (Claude)
- *    - Alibaba Cloud (Qwen)
- *    - Perplexity API
- * 
- * Real implementation example:
- * 
- * async function analyzeMatchday(payload: AnalysisPayload): Promise<PredictionMap> {
- *   const response = await fetch(`${BACKEND_URL}/api/analyze`, {
- *     method: 'POST',
- *     headers: { 'Content-Type': 'application/json' },
- *     body: JSON.stringify(payload),
- *   });
- *   return response.json();
- * }
+ *
+ * Calls /api/analyze (Vercel Function) for each of the 5 models.
+ * The Function handles all AI API keys server-side.
+ *
+ * Flow:
+ *   Browser → POST /api/analyze?model=chatgpt → Vercel Fn → OpenAI → AIPrediction
+ *
+ * Fallback:
+ *   If the API call fails, a mock prediction is generated so the
+ *   UI never breaks — but a console warning is shown.
+ * ============================================================
  */
 
 import { AIPrediction, Match, League } from '../types';
 import { AI_MODELS, PREDICTION_POOLS } from '../data/mockData';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || null;
-
 // ============================================================
-// SYSTEM PROMPT — Permanent, never changes
-// ============================================================
-const SYSTEM_PROMPT = `You are a professional sports analyst specialized in probabilistic prediction.
-
-Your role is to analyze sports matchups and identify the team with the highest probability of winning in the selected league matchday.
-
-Your analysis must consider:
-• Relative team strength
-• Recent form
-• Tactical advantage
-• Home vs away performance
-• Squad depth
-• Momentum trends
-
-Rules:
-1. Select ONE team with the highest probability of winning in the matchday.
-2. Estimate probability between 70% and 90%.
-3. Provide a concise explanation (maximum 30 words).
-4. Do not invent statistics.
-
-Output JSON: { "team_pick": "", "probability": "", "summary": "" }`;
-
-// ============================================================
-// ANALYSIS PAYLOAD — Sent to backend/AI models
+// ANALYSIS PAYLOAD — Sent to /api/analyze
 // ============================================================
 export interface AnalysisPayload {
-  systemPrompt: string;
-  sport: string;
-  league: string;
-  matchday: number | string;
+  systemPrompt?: string; // reserved, not sent (prompt lives server-side)
+  sport:     string;
+  league:    string;
+  matchday:  number | string;
   matches: Array<{
     homeTeam: string;
     awayTeam: string;
-    date: string;
-    time: string;
-    venue?: string;
+    date:     string;
+    time:     string;
+    venue?:   string;
   }>;
 }
 
 export type PredictionMap = Record<string, AIPrediction>;
 
 // ============================================================
-// BUILD PAYLOAD — Creates the analysis payload
+// BUILD PAYLOAD
 // ============================================================
 export function buildAnalysisPayload(matches: Match[], league: League | null): AnalysisPayload {
   return {
-    systemPrompt: SYSTEM_PROMPT,
-    sport: league?.sport || 'football',
-    league: league?.name || 'Unknown League',
+    sport:    league?.sport || 'football',
+    league:   league?.name  || 'Unknown League',
     matchday: league?.currentMatchday || 'current',
-    matches: matches.map(m => ({
+    matches:  matches.map(m => ({
       homeTeam: m.homeTeam.name,
       awayTeam: m.awayTeam.name,
-      date: m.date,
-      time: m.time,
-      venue: m.venue,
+      date:     m.date,
+      time:     m.time,
+      venue:    m.venue,
     })),
   };
 }
 
 // ============================================================
-// MOCK PREDICTION GENERATOR
+// MOCK FALLBACK (only used when /api/analyze fails)
 // ============================================================
 function generateMockPrediction(
-  modelId: string,
-  leagueId: string,
-  matches: Match[],
+  modelId:    string,
+  leagueId:   string,
+  matches:    Match[],
   modelIndex: number
 ): AIPrediction {
   const pool = PREDICTION_POOLS[leagueId] || PREDICTION_POOLS['premier-league'];
 
   if (!pool || pool.length === 0) {
-    const randomMatch = matches[Math.floor(Math.random() * matches.length)];
-    const isHome = Math.random() > 0.4;
-    const team = isHome ? randomMatch.homeTeam.name : randomMatch.awayTeam.name;
+    const m    = matches[Math.floor(Math.random() * matches.length)];
+    const team = Math.random() > 0.4 ? m.homeTeam.name : m.awayTeam.name;
     return {
       modelId,
-      teamPick: team,
+      teamPick:    team,
       probability: Math.floor(Math.random() * 21) + 70,
-      summary: `Análisis estadístico sugiere a ${team} como el pick más sólido de la jornada.`,
-      matchId: randomMatch.id,
+      summary:     `Análisis estadístico sugiere a ${team} como el pick más sólido de la jornada.`,
+      matchId:     m.id,
     };
   }
 
-  // Bias: first 3 models tend to agree (consensus simulation)
-  const pickIndex = modelIndex < 3
-    ? 0  // First picks align for consensus
-    : Math.min(modelIndex - 2, pool.length - 1);
-
-  const pick = pool[Math.min(pickIndex, pool.length - 1)];
-  const summaryIndex = modelIndex % pick.summaries.length;
+  const pickIndex = modelIndex < 3 ? 0 : Math.min(modelIndex - 2, pool.length - 1);
+  const pick      = pool[Math.min(pickIndex, pool.length - 1)];
 
   return {
     modelId,
-    teamPick: pick.teamPick,
-    probability: Math.floor(Math.random() * 16) + 72, // 72-87%
-    summary: pick.summaries[summaryIndex],
-    matchId: pick.matchId,
+    teamPick:    pick.teamPick,
+    probability: Math.floor(Math.random() * 16) + 72,
+    summary:     pick.summaries[modelIndex % pick.summaries.length],
+    matchId:     pick.matchId,
   };
 }
 
 // ============================================================
-// SIMULATE SINGLE AI CALL — With realistic delay
+// REAL AI CALL — POST /api/analyze
 // ============================================================
-async function simulateAICall(
-  modelId: string,
-  leagueId: string,
-  matches: Match[],
+async function callAnalyzeAPI(
+  modelId:    string,
+  payload:    AnalysisPayload,
+  leagueId:   string,
+  matches:    Match[],
   modelIndex: number
 ): Promise<AIPrediction> {
-  // Simulate different response times per model
-  const delays: Record<string, number> = {
-    gemini: 800,
-    chatgpt: 1200,
-    perplexity: 1500,
-    claude: 1900,
-    qwen: 2300,
-  };
+  try {
+    const res = await fetch('/api/analyze', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ model: modelId, payload }),
+    });
 
-  const delay = (delays[modelId] || 1500) + Math.random() * 400;
-  
-  await new Promise(resolve => setTimeout(resolve, delay));
-  
-  return generateMockPrediction(modelId, leagueId, matches, modelIndex);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    // Validate required fields
+    if (!data.teamPick || data.probability == null || !data.summary) {
+      throw new Error('Incomplete response from /api/analyze');
+    }
+
+    // Find matchId by matching team name to a match in the list
+    const matchId =
+      matches.find(
+        m =>
+          m.homeTeam.name === data.teamPick ||
+          m.awayTeam.name === data.teamPick
+      )?.id || matches[0]?.id || '';
+
+    console.log(`✅ [${modelId}] → ${data.teamPick} (${data.probability}%)`);
+
+    return {
+      modelId,
+      teamPick:    data.teamPick,
+      probability: data.probability,
+      summary:     data.summary,
+      matchId,
+    };
+
+  } catch (err: any) {
+    console.warn(`⚠️ [${modelId}] API failed — using mock fallback:`, err.message);
+    return generateMockPrediction(modelId, leagueId, matches, modelIndex);
+  }
 }
 
 // ============================================================
-// MAIN ANALYZE FUNCTION — Calls all 5 AI models
+// MAIN ANALYZE FUNCTION — Calls all 5 AI models in parallel
 // ============================================================
 export async function analyzeMatchday(
-  matches: Match[],
-  league: League | null,
+  matches:         Match[],
+  league:          League | null,
   onModelComplete?: (modelId: string, prediction: AIPrediction) => void
 ): Promise<PredictionMap> {
   if (matches.length === 0) {
@@ -172,24 +156,11 @@ export async function analyzeMatchday(
   }
 
   const leagueId = league?.id || 'premier-league';
-
-  // 🔌 REAL BACKEND: Uncomment when backend is ready
-  // if (BACKEND_URL) {
-  //   const payload = buildAnalysisPayload(matches, league);
-  //   const response = await fetch(`${BACKEND_URL}/api/analyze`, {
-  //     method: 'POST',
-  //     headers: { 'Content-Type': 'application/json' },
-  //     body: JSON.stringify(payload),
-  //   });
-  //   if (!response.ok) throw new Error('Backend error');
-  //   return response.json();
-  // }
-
-  // MOCK: Simulate all 5 AI calls simultaneously
+  const payload  = buildAnalysisPayload(matches, league);
   const predictions: PredictionMap = {};
 
   const promises = AI_MODELS.map((model, index) =>
-    simulateAICall(model.id, leagueId, matches, index).then(prediction => {
+    callAnalyzeAPI(model.id, payload, leagueId, matches, index).then(prediction => {
       predictions[model.id] = prediction;
       onModelComplete?.(model.id, prediction);
       return prediction;
@@ -215,18 +186,16 @@ export function calculateConsensus(predictions: PredictionMap) {
     counts[pred.teamPick].totalProb += pred.probability;
   });
 
-  const sorted = Object.entries(counts)
-    .sort(([, a], [, b]) => b.count - a.count);
-
+  const sorted = Object.entries(counts).sort(([, a], [, b]) => b.count - a.count);
   if (sorted.length === 0) return null;
 
   const [teamPick, data] = sorted[0];
 
   return {
     teamPick,
-    count: data.count,
-    models: data.models,
+    count:          data.count,
+    models:         data.models,
     avgProbability: Math.round(data.totalProb / data.count),
-    hasConsensus: data.count >= 3,
+    hasConsensus:   data.count >= 3,
   };
 }

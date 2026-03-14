@@ -13,8 +13,8 @@ const AI_LOGOS: Record<string, string> = {
   chatgpt: 'GPT',
   gemini: 'GEM',
   claude: 'CLD',
-  qwen: 'QWN',
-  perplexity: 'PRX',
+  llama: 'LLM',
+  mistral: 'MST',
 };
 
 function ProbabilityRing({ probability, color }: { probability: number; color: string }) {

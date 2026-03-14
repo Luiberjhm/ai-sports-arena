@@ -94,10 +94,10 @@ export interface AIApiConfig {
   googleAIKey?: string;
   // Anthropic — Claude
   anthropicKey?: string;
-  // Alibaba — Qwen
-  qwenApiKey?: string;
-  // Perplexity
-  perplexityKey?: string;
+  // Groq — Llama
+  groqApiKey?: string;
+  // Mistral AI
+  mistralApiKey?: string;
 }
 
 export interface BackendConfig {
