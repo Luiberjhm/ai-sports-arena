@@ -75,8 +75,19 @@ function transformEvent(event: any, leagueId: string, sport: string): object | n
   // Descartar partidos fuera del rango de fechas válido
   if (!isValidFutureDate(dateStr)) return null;
 
+  // Extraer número de jornada: buscar primero por palabra clave, luego por posición final
+  let matchday: number | null = null;
   const headline: string = comp.notes?.[0]?.headline || '';
-  const roundMatch = headline.match(/\d+/);
+  const keywordMatch = headline.match(/(?:matchweek|week|round|jornada|matchday)\s+(\d+)/i);
+  if (keywordMatch) {
+    matchday = parseInt(keywordMatch[1]);
+  } else {
+    // Último número del headline como fallback (evita fechas del día al inicio)
+    const lastNum = headline.match(/(\d+)\s*$/);
+    if (lastNum && parseInt(lastNum[1]) <= 38) matchday = parseInt(lastNum[1]);
+  }
+  // También intentar desde event.week si existe (algunos deportes/competiciones)
+  if (!matchday && event.week?.number) matchday = event.week.number;
 
   return {
     id:       String(event.id),
@@ -94,7 +105,7 @@ function transformEvent(event: any, leagueId: string, sport: string): object | n
     sport,
     status:   isLive ? 'live' : 'scheduled',
     venue:    comp.venue?.fullName || null,
-    matchday: roundMatch ? parseInt(roundMatch[0]) : null,
+    matchday,
   };
 }
 

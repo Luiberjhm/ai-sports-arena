@@ -108,8 +108,17 @@ function transformESPNEvent(event: any, leagueId: string, sport: Sport): Match |
   const matchDate = new Date(dateStr);
   if (matchDate < today || matchDate > maxDate) return null;
 
+  // Extraer número de jornada: primero por palabra clave, luego último número del headline
+  let matchday: number | undefined;
   const headline: string = comp.notes?.[0]?.headline || '';
-  const roundMatch = headline.match(/\d+/);
+  const keywordMatch = headline.match(/(?:matchweek|week|round|jornada|matchday)\s+(\d+)/i);
+  if (keywordMatch) {
+    matchday = parseInt(keywordMatch[1]);
+  } else {
+    const lastNum = headline.match(/(\d+)\s*$/);
+    if (lastNum && parseInt(lastNum[1]) <= 38) matchday = parseInt(lastNum[1]);
+  }
+  if (!matchday && (event as any).week?.number) matchday = (event as any).week.number;
 
   return {
     id:       String(event.id),
@@ -127,7 +136,7 @@ function transformESPNEvent(event: any, leagueId: string, sport: Sport): Match |
     sport,
     status:   isLive ? 'live' : 'scheduled',
     venue:    comp.venue?.fullName,
-    matchday: roundMatch ? parseInt(roundMatch[0]) : undefined,
+    matchday,
   };
 }
 

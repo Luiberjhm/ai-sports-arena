@@ -27,7 +27,7 @@ export function SportsPage({ sport }: SportsPageProps) {
     nfl: { league: 'National Football League', description: 'Temporada 2025/26', matchday: 'Semana 18' },
     mlb: { league: 'Major League Baseball', description: 'Spring Training 2026', matchday: 'Partidos del día' },
     nhl: { league: 'National Hockey League', description: 'Regular Season 2025/26', matchday: 'Partidos del día' },
-    ncaa: { league: 'NCAA Division I Football', description: 'Bowl Season 2025/26', matchday: 'Partidos del fin de semana' },
+    ncaa: { league: 'NCAA Division I Basketball', description: "March Madness / Regular Season 2025/26", matchday: 'Partidos del día' },
     football: { league: 'Fútbol Europeo', description: 'Varias ligas', matchday: 'Jornada actual' },
   };
 

@@ -3,50 +3,28 @@ import { Link } from 'react-router';
 import { motion } from 'motion/react';
 import { Calendar, Zap, Activity } from 'lucide-react';
 import { AICard } from '../components/shared/AICard';
-import { RunButton } from '../components/shared/RunButton';
 import { ConsensusPanel } from '../components/shared/ConsensusPanel';
 import { PerformanceHeatmap } from '../components/shared/PerformanceHeatmap';
 import { LeaderboardTable } from '../components/shared/LeaderboardTable';
 import { AI_MODELS, SPORT_CONFIGS } from '../data/mockData';
-import { analyzeMatchday, PredictionMap } from '../services/aiService';
+import { PredictionMap } from '../services/aiService';
 import { getFootballMatchday, getTodayInfo } from '../services/sportsService';
-import { FOOTBALL_LEAGUES } from '../data/mockData';
 import { AnalysisStatus, Match } from '../types';
 
 export function HomePage() {
-  const [status, setStatus] = useState<AnalysisStatus>('idle');
-  const [predictions, setPredictions] = useState<PredictionMap>({});
-  const [completedModels, setCompletedModels] = useState<Set<string>>(new Set());
+  // Estado de análisis — el dashboard muestra el estado idle permanente
+  // El análisis real ocurre en cada página de deporte/liga
+  const status: AnalysisStatus = 'idle';
+  const predictions: PredictionMap = {};
+  const completedModels = new Set<string>();
   const [matches, setMatches] = useState<Match[]>([]);
   const today = getTodayInfo();
-  const featuredLeague = FOOTBALL_LEAGUES[0]; // Premier League as featured
 
   useEffect(() => {
     getFootballMatchday('premier-league').then(result => setMatches(result.matches));
   }, []);
 
-  const handleRun = async () => {
-    if (status === 'loading') return;
-    setStatus('loading');
-    setPredictions({});
-    setCompletedModels(new Set());
-
-    try {
-      await analyzeMatchday(matches, featuredLeague, (modelId, prediction) => {
-        setPredictions(prev => ({ ...prev, [modelId]: prediction }));
-        setCompletedModels(prev => new Set([...prev, modelId]));
-      });
-      setStatus('complete');
-    } catch {
-      setStatus('error');
-    }
-  };
-
-  const modelStatus = (modelId: string): AnalysisStatus => {
-    if (status === 'idle') return 'idle';
-    if (completedModels.has(modelId)) return 'complete';
-    return 'loading';
-  };
+  const modelStatus = (_modelId: string): AnalysisStatus => 'idle';
 
   const getConsensusPick = () => {
     if (Object.keys(predictions).length === 0) return null;
@@ -119,15 +97,6 @@ export function HomePage() {
               <p style={{ fontSize: '10px', color: '#555', marginTop: '2px' }}>{kpi.sub}</p>
             </motion.div>
           ))}
-        </div>
-
-        {/* RUN section */}
-        <div className="flex flex-col items-center gap-4 py-2">
-          <RunButton
-            status={status}
-            matchCount={matches.length}
-            onRun={handleRun}
-          />
         </div>
 
         {/* AI Cards Grid */}
