@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { motion } from 'motion/react';
-import { Calendar, Zap, Activity, ChevronRight } from 'lucide-react';
+import { Calendar, Zap, Activity } from 'lucide-react';
 import { AICard } from '../components/shared/AICard';
 import { RunButton } from '../components/shared/RunButton';
 import { ConsensusPanel } from '../components/shared/ConsensusPanel';
@@ -65,7 +65,7 @@ export function HomePage() {
     { label: 'Picks hoy', value: matches.length * 5, sub: 'análisis totales', color: '#FF6200' },
     { label: 'Mejor IA', value: 'Gemini', sub: '71.2% precisión', color: '#4285F4' },
     { label: 'Consenso', value: status === 'complete' ? (consensusPick || 'Dividido') : '—', sub: status === 'complete' ? 'Pick del día' : 'Pendiente RUN', color: '#22C55E' },
-    { label: 'Ligas activas', value: '6', sub: 'fútbol europeo', color: '#A855F7' },
+    { label: 'Ligas activas', value: '7', sub: 'fútbol europeo', color: '#A855F7' },
   ];
 
   return (
@@ -121,45 +121,13 @@ export function HomePage() {
           ))}
         </div>
 
-        {/* Featured Analysis Zone */}
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{ background: '#111', border: '1px solid rgba(255,98,0,0.15)' }}
-        >
-          {/* Banner */}
-          <div
-            className="px-5 py-4 flex items-center justify-between"
-            style={{
-              background: 'linear-gradient(135deg, rgba(255,98,0,0.12), rgba(255,98,0,0.04))',
-              borderBottom: '1px solid rgba(255,98,0,0.15)',
-            }}
-          >
-            <div>
-              <h2 className="text-white" style={{ fontSize: '18px', fontWeight: 800 }}>
-                Premier League · Jornada 29
-              </h2>
-              <p style={{ fontSize: '12px', color: '#666' }}>
-                {matches.length} partidos · 14-16 Marzo 2026
-              </p>
-            </div>
-            <Link
-              to="/futbol"
-              className="flex items-center gap-1 rounded-lg px-3 py-1.5 transition-all hover:bg-white/[0.08]"
-              style={{ border: '1px solid rgba(255,255,255,0.1)', fontSize: '11px', color: '#888' }}
-            >
-              Ver todo
-              <ChevronRight size={12} />
-            </Link>
-          </div>
-
-          {/* RUN section */}
-          <div className="px-5 py-6 flex flex-col items-center gap-4">
-            <RunButton
-              status={status}
-              matchCount={matches.length}
-              onRun={handleRun}
-            />
-          </div>
+        {/* RUN section */}
+        <div className="flex flex-col items-center gap-4 py-2">
+          <RunButton
+            status={status}
+            matchCount={matches.length}
+            onRun={handleRun}
+          />
         </div>
 
         {/* AI Cards Grid */}

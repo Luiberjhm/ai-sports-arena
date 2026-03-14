@@ -35,13 +35,9 @@ const AMERICAN_CONFIG: Record<string, { sport: string; league: string }> = {
   ncaa: { sport: 'basketball', league: 'mens-college-basketball' },
 };
 
-// Rango: hoy → +14 días en formato YYYYMMDD-YYYYMMDD
-function getDateRange(): string {
-  const today = new Date();
-  const future = new Date(today);
-  future.setDate(today.getDate() + 14);
-  const fmt = (d: Date) => d.toISOString().split('T')[0].replace(/-/g, '');
-  return `${fmt(today)}-${fmt(future)}`;
+// Solo los partidos de HOY (formato YYYYMMDD)
+function getTodayDate(): string {
+  return new Date().toISOString().split('T')[0].replace(/-/g, '');
 }
 
 // Validar que la fecha del partido sea futura y dentro de 30 días
@@ -114,12 +110,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Routing: fútbol europeo vs deportes americanos
   if (typeof league === 'string' && FOOTBALL_SLUGS[league]) {
-    espnUrl   = `${ESPN_BASE}/soccer/${FOOTBALL_SLUGS[league]}/scoreboard?dates=${getDateRange()}`;
+    espnUrl   = `${ESPN_BASE}/soccer/${FOOTBALL_SLUGS[league]}/scoreboard?dates=${getTodayDate()}`;
     leagueId  = league;
     sportType = 'football';
   } else if (typeof sport === 'string' && AMERICAN_CONFIG[sport]) {
     const cfg = AMERICAN_CONFIG[sport];
-    espnUrl   = `${ESPN_BASE}/${cfg.sport}/${cfg.league}/scoreboard?dates=${getDateRange()}`;
+    espnUrl   = `${ESPN_BASE}/${cfg.sport}/${cfg.league}/scoreboard?dates=${getTodayDate()}`;
     leagueId  = sport;
     sportType = sport;
   } else {

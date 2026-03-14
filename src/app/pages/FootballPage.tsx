@@ -17,14 +17,17 @@ export function FootballPage() {
   const [completedModels, setCompletedModels] = useState<Set<string>>(new Set());
   const [matches, setMatches] = useState<Match[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
+  const [currentMatchday, setCurrentMatchday] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     setLoadingMatches(true);
     setStatus('idle');
     setPredictions({});
     setCompletedModels(new Set());
+    setCurrentMatchday(undefined);
     getFootballMatchday(selectedLeague.id).then(result => {
       setMatches(result.matches);
+      setCurrentMatchday(result.matches.find(m => m.matchday)?.matchday);
       setLoadingMatches(false);
     });
   }, [selectedLeague]);
@@ -126,7 +129,7 @@ export function FootballPage() {
                     </p>
                     {isActive && (
                       <p style={{ fontSize: '10px', color: '#FF6200', opacity: 0.7 }}>
-                        J{league.currentMatchday}
+                        {currentMatchday ? `J${currentMatchday}` : `J${league.currentMatchday}`}
                       </p>
                     )}
                   </div>
@@ -179,7 +182,7 @@ export function FootballPage() {
                     <div className="flex items-center gap-1.5">
                       <Trophy size={12} style={{ color: '#FF6200' }} />
                       <span style={{ fontSize: '12px', color: '#FF6200', fontWeight: 600 }}>
-                        Jornada {selectedLeague.currentMatchday}
+                        Jornada {currentMatchday ?? selectedLeague.currentMatchday}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">

@@ -71,14 +71,10 @@ export interface SportsAPIResult {
 }
 
 // ============================================================
-// DATE RANGE — hoy → +14 días (YYYYMMDD-YYYYMMDD)
+// TODAY — Solo partidos del día de hoy (YYYYMMDD)
 // ============================================================
-function getDateRange(): string {
-  const today  = new Date();
-  const future = new Date(today);
-  future.setDate(today.getDate() + 14);
-  const fmt = (d: Date) => d.toISOString().split('T')[0].replace(/-/g, '');
-  return `${fmt(today)}-${fmt(future)}`;
+function getTodayDate(): string {
+  return new Date().toISOString().split('T')[0].replace(/-/g, '');
 }
 
 // ============================================================
@@ -208,7 +204,7 @@ async function fetchSportsData(
 export async function getFootballMatchday(leagueId: string): Promise<SportsAPIResult> {
   const slug = FOOTBALL_ESPN_SLUGS[leagueId];
   const espnUrl = slug
-    ? `${ESPN_BASE}/soccer/${slug}/scoreboard?dates=${getDateRange()}`
+    ? `${ESPN_BASE}/soccer/${slug}/scoreboard?dates=${getTodayDate()}`
     : '';
 
   return fetchSportsData(
@@ -226,7 +222,7 @@ export async function getFootballMatchday(leagueId: string): Promise<SportsAPIRe
 export async function getSportMatches(sport: string): Promise<SportsAPIResult> {
   const cfg     = AMERICAN_ESPN_CONFIG[sport];
   const espnUrl = cfg
-    ? `${ESPN_BASE}/${cfg.sport}/${cfg.league}/scoreboard?dates=${getDateRange()}`
+    ? `${ESPN_BASE}/${cfg.sport}/${cfg.league}/scoreboard?dates=${getTodayDate()}`
     : '';
 
   const fallbackMap: Record<string, Match[]> = {
