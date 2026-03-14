@@ -129,7 +129,7 @@ export function FootballPage() {
                     </p>
                     {isActive && (
                       <p style={{ fontSize: '10px', color: '#FF6200', opacity: 0.7 }}>
-                        {currentMatchday ? `J${currentMatchday}` : `J${league.currentMatchday}`}
+                        {currentMatchday ? `J${currentMatchday}` : 'Hoy'}
                       </p>
                     )}
                   </div>
@@ -182,7 +182,7 @@ export function FootballPage() {
                     <div className="flex items-center gap-1.5">
                       <Trophy size={12} style={{ color: '#FF6200' }} />
                       <span style={{ fontSize: '12px', color: '#FF6200', fontWeight: 600 }}>
-                        Jornada {currentMatchday ?? selectedLeague.currentMatchday}
+                        {currentMatchday ? `Jornada ${currentMatchday}` : 'Partidos del día'}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
